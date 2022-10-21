@@ -21,6 +21,6 @@ public class BotInfoController {
         bot.put("name","fsw");
         bot.put("number","99999");
         return bot;
-
     }
+
 }
