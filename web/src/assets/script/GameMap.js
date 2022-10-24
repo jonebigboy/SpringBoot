@@ -1,5 +1,6 @@
 
 import { GameObject } from "./GameObject";
+import { Snake } from "./Snakes";
 import { Wall } from "./Wall";
 
 export class GameMap extends GameObject {
@@ -9,9 +10,14 @@ export class GameMap extends GameObject {
         this.parent = parent;
         this.L = 0; //一个格子的相对距离
         this.row = 13;
-        this.col = 13;
+        this.col = 14;
         this.walls = [];
         this.blocknumber = 30;
+
+        this.snakers = [
+            new Snake({ id: 0, color: "#4876EC", r: this.row - 2, c: 1 }, this),
+            new Snake({ id: 1, color: "#F94848", r: 1, c: this.col - 2 }, this),
+        ];
     }
 
     check(g, sx, sy, tx, ty) {
@@ -62,11 +68,11 @@ export class GameMap extends GameObject {
                 let c = parseInt(Math.random() * this.col);
                 if (r == 1 && c == this.col - 2 || c == 1 && r == this.row - 2) continue;
 
-                if (g[r][c] || g[c][r]) {
+                if (g[r][c] || g[this.row - r - 1][this.col - c - 1]) {
                     continue;
                 }
                 g[r][c] = true;
-                g[c][r] = true;
+                g[this.row - r - 1][this.col - c - 1] = true;
                 break;
             }
 
@@ -92,6 +98,60 @@ export class GameMap extends GameObject {
 
 
     }
+    add_listening_events() {
+        this.ctx.canvas.focus();
+        const [snake0, snake1] = this.snakers;
+        this.ctx.canvas.addEventListener("keydown", e => {
+            if (e.key === "w") snake0.set_direction(0);
+            else if (e.key === "d") snake0.set_direction(1);
+            else if (e.key === "s") snake0.set_direction(2);
+            else if (e.key === "a") snake0.set_direction(3);
+            else if (e.key === "ArrowUp") snake1.set_direction(0);
+            else if (e.key === "ArrowRight") snake1.set_direction(1);
+            else if (e.key === "ArrowDown") snake1.set_direction(2);
+            else if (e.key === "ArrowLeft") snake1.set_direction(3);
+        });
+
+    }
+
+    check_rdy() {
+        for (const snake of this.snakers) {
+
+            if (snake.state !== "idle") return false;
+
+            if (snake.direction === -1) return false;
+
+        }
+        return true;
+    }
+
+    check_vaild(cell) {
+        //撞墙
+        for (const i in this.walls) {
+            if (this.walls[i].r === cell.r && this.walls[i].c === cell.c) {
+                return false;
+            }
+        }
+
+        //碰蛇
+        for (const snake of this.snakers) {
+            let k = snake.cells.length;
+
+            if (!snake.check_increace()) {
+                k--;//减去蛇尾 不去判断
+            }
+
+            for (let i = 0; i < k; i++) {
+                if (snake.cells[i].r === cell.r && snake.cells[i].c === cell.c) {
+                    return false;
+                }
+            }
+        }
+        return true;
+
+
+
+    }
 
     start() {
 
@@ -100,7 +160,13 @@ export class GameMap extends GameObject {
                 break;
             }
         }
+        this.add_listening_events();
 
+    }
+    next_step() {
+        for (const snake of this.snakers) {
+            snake.next_step();
+        }
     }
 
     updata_size() {
@@ -111,6 +177,10 @@ export class GameMap extends GameObject {
 
     update() {
         this.updata_size();
+
+        if (this.check_rdy()) {
+            this.next_step();
+        }
         this.render();
     }
     render() {
