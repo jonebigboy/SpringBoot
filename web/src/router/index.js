@@ -5,6 +5,8 @@ import LeaderBoard from '@/views/leaderboard/LeaderBoard'
 import RankList from '@/views/list/RankList'
 import UserBot from '@/views/user/bot/UserBot'
 import PkIndex from '@/views/pk/PkIndex'
+import UserAccountLogin from '@/views/user/account/UserAccountLogin'
+import UserAccountRegister from '@/views/user/account/UserAccountRegister'
 
 const routes = [
   {
@@ -32,6 +34,16 @@ const routes = [
     path: "/userbot/",
     name: "userbot_index",
     component: UserBot
+  },
+  {
+    path: "/user/account/login",
+    name: "UserAccountLogin",
+    component: UserAccountLogin
+  },
+  {
+    path: "/user/account/register",
+    name: "UserAccountRegister",
+    component: UserAccountRegister
   },
   {
     path: "/404/",

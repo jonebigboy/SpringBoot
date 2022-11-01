@@ -1,13 +1,17 @@
 <template>
-    UserBot
+    <BaseContent>
+        UserBot
+    </BaseContent>
 </template>
 
 
 <script>
+import BaseContent from '@/components/BaseContent.vue';
+
 
 export default {
     name: "UserBot",
-
+    components: { BaseContent }
 }
 
 </script>

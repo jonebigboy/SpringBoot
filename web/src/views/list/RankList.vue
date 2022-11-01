@@ -1,13 +1,17 @@
 <template>
-    RankList
+    <BaseContent>
+        RankList
+    </BaseContent>
 </template>
 
 
 <script>
+import BaseContent from '@/components/BaseContent.vue';
+
 
 export default {
     name: "RankList",
-
+    components: { BaseContent }
 }
 
 </script>
