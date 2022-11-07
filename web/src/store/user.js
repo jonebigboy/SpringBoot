@@ -81,6 +81,7 @@ const ModuleUser = {
         },
         loginout(context) {
             context.commit("loginout");
+            localStorage.removeItem("jwt_token");
         }
 
 

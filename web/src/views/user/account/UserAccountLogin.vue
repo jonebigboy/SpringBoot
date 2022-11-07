@@ -53,7 +53,8 @@ export default {
                 username: username.value,
                 password: password.value,
                 success() {
-                    console.log(store.state.user.token);
+
+                    localStorage.setItem("jwt_token", store.state.user.token);
                     store.dispatch("getinfo", {
                         success() {
                             router.push({ name: "home" });

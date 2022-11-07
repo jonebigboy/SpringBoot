@@ -7,12 +7,16 @@
 
 
 <script>
+
 import BaseContent from '@/components/BaseContent.vue';
 
 
 export default {
+
     name: "LeaderBoard",
-    components: { BaseContent }
+    components: { BaseContent },
+
+
 }
 
 </script>

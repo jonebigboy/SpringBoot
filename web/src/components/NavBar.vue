@@ -25,7 +25,7 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
-                            jonebigboy
+                            {{ username }}
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                             <li>
@@ -75,6 +75,10 @@ export default {
         const store = useStore();
         const route = useRoute();
 
+
+
+        let username = computed(() => store.state.user.username);
+
         let router_name = computed(() => route.name);
         const loginout = () => {
             store.dispatch("loginout");
@@ -82,6 +86,7 @@ export default {
         return {
             router_name,
             loginout,
+            username,
         }
 
     }
