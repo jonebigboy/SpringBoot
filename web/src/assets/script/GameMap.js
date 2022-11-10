@@ -4,7 +4,7 @@ import { Snake } from "./Snakes";
 import { Wall } from "./Wall";
 
 export class GameMap extends GameObject {
-    constructor(ctx, parent) {
+    constructor(ctx, parent, g) {
         super();
         this.ctx = ctx;
         this.parent = parent;
@@ -13,6 +13,7 @@ export class GameMap extends GameObject {
         this.col = 14;
         this.walls = [];
         this.blocknumber = 30;
+        this.g = g;
 
         this.snakers = [
             new Snake({ id: 0, color: "#4876EC", r: this.row - 2, c: 1 }, this),
@@ -20,74 +21,14 @@ export class GameMap extends GameObject {
         ];
     }
 
-    check(g, sx, sy, tx, ty) {
-        if (sx == tx && sy == ty) return true;
-        g[sx][sy] = true;
 
-        const dx = [0, 1, 0, -1];
-        const dy = [1, 0, -1, 0];
-        for (let i = 0; i < 4; i++) {
-            let x = sx + dx[i];
-            let y = sy + dy[i];
-            if (!g[x][y] && this.check(g, x, y, tx, ty)) { //Flood Fill算法
-                return true;
-            }
-        }
-        return false;
-
-    }
 
     create_walls() {
-        //初始化
-        const g = [];
-        for (let i = 0; i < this.row; i++) {
-            g[i] = [];
-            for (let j = 0; j < this.col; j++) {
-                g[i][j] = false;
-            }
-        }
-        //左右
-        for (let i = 0; i < this.row; i++) {
-            g[i][0] = true;
-        }
-        for (let i = 0; i < this.row; i++) {
-            g[i][this.col - 1] = true;
-        }
-        //上下
-        for (let i = 0; i < this.col; i++) {
-            g[0][i] = true;
-        }
-        for (let i = 0; i < this.col; i++) {
-            g[this.row - 1][i] = true;
-        }
-
-        //中间
-        for (let i = 1; i <= this.blocknumber / 2; i++) {
-            for (let j = 0; j < 10000; j++) {
-                let r = parseInt(Math.random() * this.row);
-                let c = parseInt(Math.random() * this.col);
-                if (r == 1 && c == this.col - 2 || c == 1 && r == this.row - 2) continue;
-
-                if (g[r][c] || g[this.row - r - 1][this.col - c - 1]) {
-                    continue;
-                }
-                g[r][c] = true;
-                g[this.row - r - 1][this.col - c - 1] = true;
-                break;
-            }
-
-
-        }
-        const copy_g = JSON.parse(JSON.stringify(g));
-
-        if (!this.check(copy_g, this.row - 2, 1, 1, this.col - 2)) {
-            return false;
-        }
 
 
         for (let i = 0; i < this.row; i++) {
             for (let j = 0; j < this.col; j++) {
-                if (g[i][j]) {
+                if (this.g[i][j] === 1) {
                     this.walls.push(new Wall(i, j, this));
                 }
             }

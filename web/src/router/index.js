@@ -6,7 +6,7 @@ import UserBot from '@/views/user/bot/UserBot'
 import PkIndex from '@/views/pk/PkIndex'
 import UserAccountLogin from '@/views/user/account/UserAccountLogin'
 import UserAccountRegister from '@/views/user/account/UserAccountRegister'
-import store from '@/store'
+import store from '@/store/index'
 
 
 const routes = [
@@ -93,11 +93,14 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
 
   const jwt_token = localStorage.getItem("jwt_token");
+
   let valid = true;//表示当前是否有token
   if (jwt_token) {
     store.commit("updateToken", jwt_token);//更新一下token 获取信息查看是否获取成功
+
     store.dispatch("getinfo", {
       success: () => {
+
       },
       error: () => {
         alert("token is out time pleace relogin");
@@ -122,6 +125,7 @@ router.beforeEach((to, from, next) => {
   }
 
 })
+
 
 
 
