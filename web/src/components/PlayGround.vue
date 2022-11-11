@@ -2,7 +2,9 @@
     <div class="row">
         <div class="col-3 text-center">
             <img class="img-fluid" :src="$store.state.user.photo" alt="自己头像">
-            <div class="name">{{ $store.state.user.username }}</div>
+            <div class="name" :style="{
+                color: $store.state.user.id == $store.state.pk.a_id ? '#4876EC' : '#F94848',
+            }">{{ $store.state.user.username }}</div>
         </div>
         <div class="col-6">
             <div class="playground">
@@ -11,7 +13,9 @@
         </div>
         <div class="col-3 text-center">
             <img class="img-fluid" :src="$store.state.pk.opponent_photo" alt="敌人头像">
-            <div class="name">{{ $store.state.pk.opponent_name }}</div>
+            <div class="name" :style="{
+                color: $store.state.user.id == $store.state.pk.b_id ? '#4876EC' : '#F94848',
+            }">{{ $store.state.pk.opponent_name }}</div>
 
         </div>
     </div>
@@ -24,7 +28,10 @@ import GameMap from './GameMap.vue';
 
 export default {
     name: "PlayGround",
-    components: { GameMap }
+    components: { GameMap },
+    setup() {
+
+    }
 }
 
 </script>
@@ -46,7 +53,7 @@ img {
 }
 
 div.name {
-    color: white;
+
     font-size: 20px;
     font-weight: 500;
     margin-top: 3vh;

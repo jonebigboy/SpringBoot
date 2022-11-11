@@ -26,7 +26,7 @@ import { useStore } from 'vuex';
 
 
 export default {
-    name: "PlayGround",
+    name: "MatchGround",
     components: {},
     setup() {
 

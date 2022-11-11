@@ -18,7 +18,8 @@ export default {
         const parent = ref(null);
         const ctx = ref(null);
         onMounted(() => {
-            new GameMap(ctx.value.getContext('2d'), parent.value, store.state.pk.gamemap);
+
+            store.commit("updateGameObject", new GameMap(ctx.value.getContext('2d'), parent.value, store.state.pk.gamemap, store));
         });
 
         return {

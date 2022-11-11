@@ -3,6 +3,8 @@ package com.kob.backend.consumer;
 import com.alibaba.fastjson2.JSONObject;
 import com.kob.backend.consumer.utils.GameMap;
 import com.kob.backend.consumer.utils.JwtAuthentication;
+import com.kob.backend.consumer.utils.Play;
+import com.kob.backend.mapper.RcordMapper;
 import com.kob.backend.mapper.UserMapper;
 import com.kob.backend.pojo.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +15,7 @@ import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,19 +26,27 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class WebSocketServer {
 
     //用于存储id和链接的关系
-    private static final ConcurrentHashMap<Integer,WebSocketServer> users=new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap<Integer,WebSocketServer> users=new ConcurrentHashMap<>();
     //匹配池子
     private static final CopyOnWriteArraySet<User> matchpool=new CopyOnWriteArraySet<>();
     //用户
     private User user;
     //会话链接
     private Session session=null;
+    private GameMap gameMap=null;
 
     private static UserMapper userMapper;
     //无法注入全局的变量,所以用set来注入全局变量
+
+    public static RcordMapper rcordMapper;
     @Autowired
     public void setUserMapper(UserMapper userMapper){
         WebSocketServer.userMapper=userMapper;
+    }
+
+    @Autowired
+    public void setRcordMapper(RcordMapper rcordMapper){
+        WebSocketServer.rcordMapper=rcordMapper;
     }
 
     @OnOpen
@@ -50,8 +61,6 @@ public class WebSocketServer {
             this.session.close();
         }
         System.out.println(users);
-
-
     }
 
     @OnClose
@@ -73,9 +82,19 @@ public class WebSocketServer {
             this.startMatching();
         }else if("cancel_matching".equals(event)){
             this.cancelMatching();
+        } else if ("move".equals(event)) {
+            this.setmove(data.getInteger("direction"));
         }
 
     }
+    
+    private void setmove(Integer d){
+        if(gameMap.getPlayA().getId().equals(user.getId())){
+            gameMap.setNextStepA(d);
+        } else if (gameMap.getPlayB().getId().equals(user.getId())) {
+            gameMap.setNextStepB(d);
+        }
+    } 
 
     private void startMatching() {
         System.out.println("start matching");
@@ -83,29 +102,52 @@ public class WebSocketServer {
 
 
         while(matchpool.size()>=2){
-            GameMap gameMap=new GameMap(13,14,30);
-            gameMap.createMap();
             Iterator<User> it=matchpool.iterator();
+
+
             User a=it.next();
             User b=it.next();
+            matchpool.remove(a);
+            matchpool.remove(b);
+
+            GameMap gameMap=new GameMap(13,14,30,new Play(a.getId(),11,1,new ArrayList<>()),new Play(b.getId(),1,12,new ArrayList<>()));
+            gameMap.createMap();
+
+            gameMap.start();//创建新的线程
+
+            users.get(a.getId()).gameMap=gameMap;//获取地图的2个play的信息
+            users.get(b.getId()).gameMap=gameMap;
+
+            //把地图上的玩家信息也传输给前端
+            JSONObject gameInfo =new JSONObject();
+
+            gameInfo.put("a_id",gameMap.getPlayA().getId());
+            gameInfo.put("a_sx",gameMap.getPlayA().getSx());
+            gameInfo.put("a_sy",gameMap.getPlayA().getSy());
+            gameInfo.put("b_id",gameMap.getPlayB().getId());
+            gameInfo.put("b_sx",gameMap.getPlayB().getSx());
+            gameInfo.put("b_sy",gameMap.getPlayB().getSy());
+            gameInfo.put("map",gameMap.getG());
+
+
             JSONObject respA=new JSONObject();
             JSONObject respB=new JSONObject();
+
             //给A的信息
             respA.put("opponent_name",b.getUsername());
             respA.put("opponent_photo",b.getPhoto());
             respA.put("event","success_match");
-            respA.put("gameMap",gameMap.getG());
+            respA.put("gameInfo",gameInfo);
             users.get(a.getId()).sendMessage(respA.toString());
 
             //给B的信息
             respB.put("opponent_name",a.getUsername());
             respB.put("opponent_photo",a.getPhoto());
             respB.put("event","success_match");
-            respB.put("gameMap",gameMap.getG());
+            respB.put("gameInfo",gameInfo);
             users.get(b.getId()).sendMessage(respB.toString());
 
-            matchpool.remove(a);
-            matchpool.remove(b);
+
 
         }
     }

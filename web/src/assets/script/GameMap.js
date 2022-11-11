@@ -1,10 +1,11 @@
 
+
 import { GameObject } from "./GameObject";
 import { Snake } from "./Snakes";
 import { Wall } from "./Wall";
 
 export class GameMap extends GameObject {
-    constructor(ctx, parent, g) {
+    constructor(ctx, parent, g, store) {
         super();
         this.ctx = ctx;
         this.parent = parent;
@@ -14,11 +15,13 @@ export class GameMap extends GameObject {
         this.walls = [];
         this.blocknumber = 30;
         this.g = g;
+        this.store = store;
 
         this.snakers = [
             new Snake({ id: 0, color: "#4876EC", r: this.row - 2, c: 1 }, this),
             new Snake({ id: 1, color: "#F94848", r: 1, c: this.col - 2 }, this),
         ];
+
     }
 
 
@@ -41,16 +44,23 @@ export class GameMap extends GameObject {
     }
     add_listening_events() {
         this.ctx.canvas.focus();
-        const [snake0, snake1] = this.snakers;
+        let d = -1;
+
+
         this.ctx.canvas.addEventListener("keydown", e => {
-            if (e.key === "w") snake0.set_direction(0);
-            else if (e.key === "d") snake0.set_direction(1);
-            else if (e.key === "s") snake0.set_direction(2);
-            else if (e.key === "a") snake0.set_direction(3);
-            else if (e.key === "ArrowUp") snake1.set_direction(0);
-            else if (e.key === "ArrowRight") snake1.set_direction(1);
-            else if (e.key === "ArrowDown") snake1.set_direction(2);
-            else if (e.key === "ArrowLeft") snake1.set_direction(3);
+            if (e.key === "w") d = 0;
+            else if (e.key === "d") d = 1;
+            else if (e.key === "s") d = 2;
+            else if (e.key === "a") d = 3;
+
+            if (d >= 0 && this.store.state.pk.loser === "none") {
+                this.store.state.pk.socket.send(JSON.stringify({
+                    event: "move",
+
+                    direction: d,
+                }));
+            }
+
         });
 
     }
