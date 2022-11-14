@@ -3,9 +3,10 @@ package com.kob.backend.consumer;
 import com.alibaba.fastjson2.JSONObject;
 import com.kob.backend.consumer.utils.GameMap;
 import com.kob.backend.consumer.utils.JwtAuthentication;
-import com.kob.backend.consumer.utils.Play;
+import com.kob.backend.mapper.BotMapper;
 import com.kob.backend.mapper.RcordMapper;
 import com.kob.backend.mapper.UserMapper;
+import com.kob.backend.pojo.Bot;
 import com.kob.backend.pojo.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -35,14 +36,16 @@ public class WebSocketServer {
     private User user;
     //会话链接
     private Session session=null;
-    private GameMap gameMap=null;
+    public GameMap gameMap=null;
 
     private static UserMapper userMapper;
     //无法注入全局的变量,所以用set来注入全局变量
 
     public static RcordMapper rcordMapper;
 
-    private static RestTemplate restTemplate;
+    public static BotMapper botMapper;
+
+    public static RestTemplate restTemplate;
 
     private final String addUrl="http://127.0.0.1:3001/add/player/";
 
@@ -58,7 +61,10 @@ public class WebSocketServer {
         WebSocketServer.rcordMapper=rcordMapper;
     }
 
-
+    @Autowired
+    public void setBotMapper(BotMapper botMapper){
+        WebSocketServer.botMapper=botMapper;
+    }
 
     @Autowired
     public void setRestTemplate(RestTemplate restTemplate){
@@ -92,10 +98,11 @@ public class WebSocketServer {
     public void onMessage(String message, Session session) {//作为路由
         // 从Client接收消息
         JSONObject data =JSONObject.parseObject(message);
-        System.out.println("get message"+message);
-        String event=data.getString("event");
+        System.out.println("get message "+message);
+        String event= data.getString("event");
+        String botId= data.getString("bot_id");
         if("start_matching".equals(event)){
-            this.startMatching();
+            this.startMatching(botId);
         }else if("cancel_matching".equals(event)){
             this.cancelMatching();
         } else if ("move".equals(event)) {
@@ -106,17 +113,30 @@ public class WebSocketServer {
     
     private void setmove(Integer d){
         if(gameMap.getPlayA().getId().equals(user.getId())){
-            gameMap.setNextStepA(d);
+            if(gameMap.getPlayA().getBotId().equals(-1))
+                gameMap.setNextStepA(d);
         } else if (gameMap.getPlayB().getId().equals(user.getId())) {
-            gameMap.setNextStepB(d);
+            if(gameMap.getPlayB().getBotId().equals(-1))
+                gameMap.setNextStepB(d);
         }
     }
 
-    public void startGame(Integer aId,Integer bId){
+    public void startGame(Integer aId,Integer aBotId,Integer bId,Integer bBotId){
 
         User a= userMapper.selectById(aId);
         User b= userMapper.selectById(bId);
-        GameMap gameMap=new GameMap(13,14,30,new Play(a.getId(),11,1,new ArrayList<>()),new Play(b.getId(),1,12,new ArrayList<>()));
+        Bot BotA=botMapper.selectById(aBotId);
+        Bot BotB=botMapper.selectById(bBotId);
+        GameMap gameMap=new GameMap(
+                13,
+                14,
+                10,
+                a.getId(),
+                BotA,
+                b.getId(),
+                BotB
+        );
+
         gameMap.createMap();
         gameMap.start();//创建新的线程
         if (users.get(a.getId()) != null)
@@ -158,12 +178,13 @@ public class WebSocketServer {
 
     }
 
-    private void startMatching() {
+    private void startMatching(String botId) {
         System.out.println("start matching");
         MultiValueMap<String,String> data=new LinkedMultiValueMap<>();
         data.add("user_id",this.user.getId().toString());
         data.add("rating",this.user.getRating().toString());
-        restTemplate.postForObject(this.addUrl,data,String.class);
+        data.add("bot_id",botId);
+        restTemplate.postForObject(addUrl,data,String.class);
 
     }
 

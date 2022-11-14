@@ -2,9 +2,14 @@ package com.kob.backend.consumer.utils;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.kob.backend.consumer.WebSocketServer;
+import com.kob.backend.pojo.Bot;
 import com.kob.backend.pojo.Record;
 import org.apache.tomcat.jni.Time;
+import org.springframework.security.core.parameters.P;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -25,13 +30,27 @@ public class GameMap extends Thread{
     private String loser="";
     private String status="moving";//end是结束
 
-    public GameMap(Integer rows, Integer cols, Integer inner_walls_count,Play playA,Play playB){
+    private final String sendCodeUrl="http://127.0.0.1:3002/add/bot/";
+
+    public GameMap(Integer rows, Integer cols, Integer inner_walls_count, Integer aId, Bot botA, Integer bId,Bot botB){
         this.rows=rows;
         this.cols=cols;
         this.inner_walls_count=inner_walls_count;
         this.g = new int[rows][cols];
-        this.playA=playA;//左下角
-        this.playB=playB;//右上角
+
+        Integer aBotId = -1, bBotId = -1;
+        String aBotCode = "", bBotCode = "";//自己的时候就是空的
+
+        if(botA!=null){
+            aBotId= botA.getId();
+            aBotCode=botA.getContent();
+        }
+        if(botB!=null){
+            bBotId=botB.getId();
+            bBotCode=botB.getContent();
+        }
+        this.playA=new Play(aId,11,1,aBotId,aBotCode,new ArrayList<>());//左下角
+        this.playB=new Play(bId,1,12,bBotId,bBotCode,new ArrayList<>());//右上角
     }
 
     public Play getPlayA(){
@@ -63,24 +82,66 @@ public class GameMap extends Thread{
             lock.unlock();
         }
     }
+    String getInput(Play play){//区分是A还是B
+        Play me,you;
+        if(play.getId().equals(playA.getId())){
+            me=playA;
+            you=playB;
+        }else{
+            me=playB;
+            you=playA;
+        }
+        return getStringMap()+"#"+
+                me.getSx() + "#" +
+                me.getSy() + "#(" +
+                me.getStringStep() + ")#" +
+                you.getSx() + "#" +
+                you.getSy() + "#(" +
+                you.getStringStep() + ")";
 
+    }
+
+    private void sendBotCode(Play player){
+        if(player.getBotId().equals(-1)) return;
+        MultiValueMap<String,String> data=new LinkedMultiValueMap<>();
+        data.add("user_id",player.getId().toString());
+        data.add("bot_code",player.getBotCode());
+        data.add("input",getInput(player));
+
+        System.out.println("sendBotCode "+player.getId());
+        WebSocketServer.restTemplate.postForObject(sendCodeUrl,data,String.class);
+
+    }
     //接收信息并且赋值
-    public boolean nextStep() throws InterruptedException {
+    public boolean nextStep()  {
 
-        Thread.sleep(200);
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        sendBotCode(playA);
+        sendBotCode(playB);
 
         for(int i=0;i<100;i++){
-            Thread.sleep(100);
-            lock.lock();
-            try {
-                if(nextStepA!=null&&nextStepB!=null){
-                    this.playA.getStep().add(nextStepA);
-                    this.playB.getStep().add(nextStepB);
-                    return true;
+            try{
+                Thread.sleep(100);
+                lock.lock();
+                try {
+                    if(nextStepA!=null&&nextStepB!=null){
+                        this.playA.getStep().add(nextStepA);
+                        this.playB.getStep().add(nextStepB);
+                        return true;
+                    }
+                }finally {
+                    lock.unlock();
                 }
-            }finally {
-                lock.unlock();
+            }catch (InterruptedException e){
+                e.printStackTrace();
             }
+
         }
         return false;
     }
@@ -149,14 +210,14 @@ public class GameMap extends Thread{
 
         boolean checkA=this.valid_snake(snakeA,snakeB);
         boolean checkB=this.valid_snake(snakeB,snakeA);
-
+        System.out.println(checkA+" "+checkB);
         if(!checkA||!checkB){
             this.status="end";
             if(!checkA&&!checkB){
                 this.loser="all";
             } else if (!checkA) {
                 this.loser="A";
-            } else if (!checkB) {
+            } else {
                 this.loser="B";
             }
         }
@@ -178,8 +239,8 @@ public class GameMap extends Thread{
             }
         }
 
-        for (int i=0;i<snakeB.size();i++){
-            if(head.getX()==snakeB.get(i).getX()&&head.getY()==snakeB.get(i).getY()){
+        for (int i=0;i<snakeB.size()-1;i++) {
+            if (head.getX() == snakeB.get(i).getX() && head.getY() == snakeB.get(i).getY()) {
                 return false;
             }
         }
@@ -255,39 +316,37 @@ public class GameMap extends Thread{
     @Override
     public void run() {
         for(int i=0;i<1000;i++){
-            try {
-                if(this.nextStep()){
-                    this.judge();
-                    System.out.println("check end "+this.status);
-                    if(this.status.equals("moving")) {
-                        this.sendMove();
-                    }else{
-                        this.sendResult();
-                        break;
-                    }
+
+            if(this.nextStep()){
+                this.judge();
+                System.out.println("check end "+this.status);
+                if(this.status.equals("moving")) {
+                    this.sendMove();
                 }else{
-                    status="end";
-                    lock.lock();
-                    try{
-                        if(this.nextStepA==null&&this.nextStepB==null){
-                            this.loser="all";
-                        } else if (this.nextStepB==null) {
-                            this.loser="B";
-                        } else if (this.nextStepA==null) {
-                            this.loser="A";
-                        }
-
-
-                    }finally {
-                        lock.unlock();
-                    }
-
                     this.sendResult();
                     break;
                 }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            }else{
+                status="end";
+                lock.lock();
+                try{
+                    if(this.nextStepA==null&&this.nextStepB==null){
+                        this.loser="all";
+                    } else if (this.nextStepB==null) {
+                        this.loser="B";
+                    } else if (this.nextStepA==null) {
+                        this.loser="A";
+                    }
+
+
+                }finally {
+                    lock.unlock();
+                }
+
+                this.sendResult();
+                break;
             }
+
         }
 
 

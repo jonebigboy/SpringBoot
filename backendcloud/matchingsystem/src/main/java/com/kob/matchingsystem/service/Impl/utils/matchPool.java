@@ -2,7 +2,7 @@ package com.kob.matchingsystem.service.Impl.utils;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.parameters.P;
+
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -25,10 +25,10 @@ public class matchPool extends Thread {
         matchPool.restTemplate =restTemplate;
     }
 
-    public void addPlayer(Integer userId,Integer rating){
+    public void addPlayer(Integer userId,Integer rating ,Integer botId){
         lock.lock();
         try{
-            players.add(new Player(userId,rating,0));
+            players.add(new Player(userId,rating,0,botId));
 
         }finally {
             lock.unlock();
@@ -66,7 +66,9 @@ public class matchPool extends Thread {
         System.out.println("send Result "+a.getId().toString()+" "+b.getId().toString());
         MultiValueMap<String,String> data=new LinkedMultiValueMap<>();
         data.add("a_id",a.getId().toString());
+        data.add("a_bot_id",a.getBotId().toString());
         data.add("b_id",b.getId().toString());
+        data.add("b_bot_id",b.getBotId().toString());
         restTemplate.postForObject(sendUrl,data,String.class);
     }
 

@@ -1,10 +1,13 @@
 package com.kob.backend.consumer.utils;
 
 
+import com.kob.backend.pojo.Bot;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.security.core.parameters.P;
 
+import javax.naming.ldap.PagedResultsControl;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +18,10 @@ public class Play {
     private Integer id;
     private Integer sx;
     private Integer sy;
+
+    private Integer botId;
+
+    private String botCode;
     private List<Integer> step;//用这个数组来生成蛇的身体
 
     private boolean check_increace(int step){

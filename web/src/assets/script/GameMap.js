@@ -13,10 +13,9 @@ export class GameMap extends GameObject {
         this.row = 13;
         this.col = 14;
         this.walls = [];
-        this.blocknumber = 30;
+        this.blocknumber = 10;
         this.g = g;
         this.store = store;
-
         this.snakers = [
             new Snake({ id: 0, color: "#4876EC", r: this.row - 2, c: 1 }, this),
             new Snake({ id: 1, color: "#F94848", r: 1, c: this.col - 2 }, this),
@@ -56,7 +55,6 @@ export class GameMap extends GameObject {
             if (d >= 0 && this.store.state.pk.loser === "none") {
                 this.store.state.pk.socket.send(JSON.stringify({
                     event: "move",
-
                     direction: d,
                 }));
             }

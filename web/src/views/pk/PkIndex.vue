@@ -43,9 +43,9 @@ export default {
                         photo: data.opponent_photo,
                     });
 
-                    setTimeout(() => {
+                    setTimeout(() => {//过2s显示页面
                         store.commit("updateStatus", "gamestart");
-                    }, 2000);
+                    }, 200);
                     store.commit("updateGameInfo", data.gameInfo);
 
                 } else if (data.event === "move") {
