@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import NotFind from '@/views/error/NotFind'
 import LeaderBoard from '@/views/leaderboard/LeaderBoard'
 import RankList from '@/views/list/RankList'
+import RecordContent from '@/views/list/RecordContent'
 import UserBot from '@/views/user/bot/UserBot'
 import PkIndex from '@/views/pk/PkIndex'
 import UserAccountLogin from '@/views/user/account/UserAccountLogin'
@@ -39,6 +40,14 @@ const routes = [
     path: "/ranklist/",
     name: "ranklist_index",
     component: RankList,
+    meta: {
+      requireAuth: true,
+    }
+  },
+  {
+    path: "/ranklist/:recordId/",
+    name: "ranklist_content",
+    component: RecordContent,
     meta: {
       requireAuth: true,
     }

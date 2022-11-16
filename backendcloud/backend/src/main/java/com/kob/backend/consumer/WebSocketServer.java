@@ -4,7 +4,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.kob.backend.consumer.utils.GameMap;
 import com.kob.backend.consumer.utils.JwtAuthentication;
 import com.kob.backend.mapper.BotMapper;
-import com.kob.backend.mapper.RcordMapper;
+import com.kob.backend.mapper.RecordMapper;
 import com.kob.backend.mapper.UserMapper;
 import com.kob.backend.pojo.Bot;
 import com.kob.backend.pojo.User;
@@ -19,7 +19,6 @@ import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
-import java.util.ArrayList;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -38,10 +37,10 @@ public class WebSocketServer {
     private Session session=null;
     public GameMap gameMap=null;
 
-    private static UserMapper userMapper;
+    public static UserMapper userMapper;
     //无法注入全局的变量,所以用set来注入全局变量
 
-    public static RcordMapper rcordMapper;
+    public static RecordMapper recordMapper;
 
     public static BotMapper botMapper;
 
@@ -57,8 +56,8 @@ public class WebSocketServer {
     }
 
     @Autowired
-    public void setRcordMapper(RcordMapper rcordMapper){
-        WebSocketServer.rcordMapper=rcordMapper;
+    public void setRcordMapper(RecordMapper recordMapper){
+        WebSocketServer.recordMapper = recordMapper;
     }
 
     @Autowired

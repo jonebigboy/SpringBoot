@@ -4,8 +4,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.kob.backend.consumer.WebSocketServer;
 import com.kob.backend.pojo.Bot;
 import com.kob.backend.pojo.Record;
-import org.apache.tomcat.jni.Time;
-import org.springframework.security.core.parameters.P;
+import com.kob.backend.pojo.User;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -176,7 +175,27 @@ public class GameMap extends Thread{
         this.saveToDB();
         this.group_send(resp.toJSONString());
     }
+    private void updateUserRating(Play player,Integer rating){
+        User user=WebSocketServer.userMapper.selectById(player.getId());
+        user.setRating(rating);
+        WebSocketServer.userMapper.updateById(user);
+
+    }
     private void saveToDB() {
+        Integer ratingA=WebSocketServer.userMapper.selectById(playA.getId()).getRating();
+        Integer ratingB=WebSocketServer.userMapper.selectById(playB.getId()).getRating();
+
+        if("A".equals(loser)){
+            ratingA-=2;
+            ratingB+=5;
+        }else if("B".equals(loser)) {
+            ratingA+=5;
+            ratingB-=2;
+        }
+
+        updateUserRating(playA,ratingA);
+        updateUserRating(playB,ratingB);
+
         Record record = new Record(
                 null,
                 this.playA.getId(),
@@ -192,7 +211,7 @@ public class GameMap extends Thread{
                 new Date()
                 );
 
-        WebSocketServer.rcordMapper.insert(record);
+        WebSocketServer.recordMapper.insert(record);
     }
     private String getStringMap(){
         StringBuilder res=new StringBuilder();
@@ -228,7 +247,6 @@ public class GameMap extends Thread{
         Cell head=snakeA.get(snakeA.size()-1);
 
         if(g[head.getX()][head.getY()]==1) {
-
             return false;
         }
 
@@ -244,9 +262,7 @@ public class GameMap extends Thread{
                 return false;
             }
         }
-
         return true;
-
     }
 
     private boolean check(int sx, int sy, int tx, int ty){
@@ -269,7 +285,6 @@ public class GameMap extends Thread{
 
         g[sx][sy]=0;//为false时候的还原现场
         return false;
-
     }
 
     private boolean draw(){
@@ -285,9 +300,12 @@ public class GameMap extends Thread{
         for (int j=0;j<cols;j++){
             g[0][j]=g[this.rows-1][j]=1;
         }
+
         Random random=new Random();
+
         for(int i=1;i<=this.inner_walls_count/2;i++){
             for (int j=0;j<1000;j++){
+
                 int r = random.nextInt(this.rows);
                 int c = random.nextInt(this.cols);
 

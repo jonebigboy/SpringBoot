@@ -56,6 +56,9 @@ public class addBotServiceImpl implements addBotService {
             map.put("message","内容太长啦");
             return map;
         }
+        if(botMapper.selectCount(null)>10){
+            map.put("message","bot不可以超过10个");
+        }
         Date now =new Date();
         Bot new_bot= new Bot(null,user.getId(),title,description,content,now,now);
         botMapper.insert(new_bot);

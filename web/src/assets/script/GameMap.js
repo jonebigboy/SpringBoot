@@ -46,20 +46,55 @@ export class GameMap extends GameObject {
         let d = -1;
 
 
-        this.ctx.canvas.addEventListener("keydown", e => {
-            if (e.key === "w") d = 0;
-            else if (e.key === "d") d = 1;
-            else if (e.key === "s") d = 2;
-            else if (e.key === "a") d = 3;
+        if (this.store.state.record.is_record) {
+            let k = 0;
+            const stepA = this.store.state.record.a_step;
+            const stepB = this.store.state.record.b_step;
+            const loser = this.store.state.record.record_loser;
+            const [snake0, snake1] = this.snakers;
 
-            if (d >= 0 && this.store.state.pk.loser === "none") {
-                this.store.state.pk.socket.send(JSON.stringify({
-                    event: "move",
-                    direction: d,
-                }));
-            }
 
-        });
+            const Interval_id = setInterval(() => {
+                if (k >= stepA.length - 1) {
+                    if (loser === "all" || loser === "A") {
+                        snake0.status = "die";
+                        snake0.color = "white";
+                    }
+                    if (loser === "all" || loser === "B") {
+                        snake1.status = "die";
+                        snake1.color = "white";
+                    }
+                    clearInterval(Interval_id);
+
+                } else {
+                    snake0.set_direction(parseInt(stepA[k]));
+                    snake1.set_direction(parseInt(stepB[k]));
+                }
+                k++;
+            }, 300);
+
+        } else {
+            this.ctx.canvas.addEventListener("keydown", e => {
+
+                if (e.key === "w") d = 0;
+                else if (e.key === "d") d = 1;
+                else if (e.key === "s") d = 2;
+                else if (e.key === "a") d = 3;
+
+
+
+                if (d >= 0 && this.store.state.pk.loser === "none") {
+                    this.store.state.pk.socket.send(JSON.stringify({
+                        event: "move",
+                        direction: d,
+                    }));
+                }
+
+            });
+        }
+
+
+
 
     }
 

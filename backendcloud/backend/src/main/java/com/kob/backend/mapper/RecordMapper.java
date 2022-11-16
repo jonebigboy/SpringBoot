@@ -6,5 +6,5 @@ import com.kob.backend.pojo.Record;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
-public interface RcordMapper extends BaseMapper<Record> {
+public interface RecordMapper extends BaseMapper<Record> {
 }
